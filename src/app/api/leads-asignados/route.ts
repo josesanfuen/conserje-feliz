@@ -1,21 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-// 👇 Importamos directamente los leads creados en la API principal
-import { leads } from '../leads/route';
+import { leads } from '@/lib/leads';
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
-  const corredoraId = searchParams.get('corredora');
+  const corredoraEmail = searchParams.get('corredora');
 
-  if (!corredoraId) {
-    return NextResponse.json({ error: 'Falta el ID de la corredora' }, { status: 400 });
+  if (!corredoraEmail) {
+    return NextResponse.json({ error: 'Falta el correo de la corredora' }, { status: 400 });
   }
 
-  // Devolvemos solo los leads que tengan asignado a esa corredora
-  const asignados = leads.filter((lead) =>
-    lead.asignadoA?.includes(corredoraId)
-  );
-
+  const asignados = leads.filter((lead) => lead.asignadoA?.includes(corredoraEmail));
   return NextResponse.json({ leads: asignados });
 }
-
