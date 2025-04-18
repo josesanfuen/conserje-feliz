@@ -193,3 +193,5 @@ export async function DELETE(req: NextRequest) {
   leads.splice(index, 1);
   return NextResponse.json({ success: true });
 }
+
+export { leads };
