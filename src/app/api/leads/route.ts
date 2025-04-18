@@ -1,28 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { v4 as uuidv4 } from 'uuid'; // ✅ solo una vez
+import { v4 as uuidv4 } from 'uuid';
 
-interface Lead {
-  id: string;
-  conserjeId: string;
-  tipoInmueble: 'casa' | 'depto';
-  tipoAcuerdo: 'arriendo' | 'venta';
-  region: string;
-  comuna: string;
-  calleNumero: string;
-  numeroDepto?: string;
-  habitaciones?: number;
-  banos?: number;
-  precio?: number;
-  anio?: number;
-  comentarios?: string;
-  fonoDueno: string;
-  emailDueno: string;
-  estado: 'por contactar' | 'en contacto' | 'cerrado';
-  asignadoA?: string[];
-}
-
-// ✅ memoria con 2 leads de prueba
-export const leads: Lead[] = [
+// Esta variable se mantiene interna y no se exporta
+const leads: Lead[] = [
   {
     id: uuidv4(),
     conserjeId: 'conserje1',
@@ -63,8 +43,41 @@ export const leads: Lead[] = [
   }
 ];
 
+interface Lead {
+  id: string;
+  conserjeId: string;
+  tipoInmueble: 'casa' | 'depto';
+  tipoAcuerdo: 'arriendo' | 'venta';
+  region: string;
+  comuna: string;
+  calleNumero: string;
+  numeroDepto?: string;
+  habitaciones?: number;
+  banos?: number;
+  precio?: number;
+  anio?: number;
+  comentarios?: string;
+  fonoDueno: string;
+  emailDueno: string;
+  estado: 'por contactar' | 'en contacto' | 'cerrado';
+  asignadoA?: string[];
+}
+
+export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const conserjeId = searchParams.get('user');
+
+  if (!conserjeId) {
+    return NextResponse.json({ error: 'Falta el ID del conserje' }, { status: 400 });
+  }
+
+  const conserjeLeads = leads.filter((l) => l.conserjeId === conserjeId);
+  return NextResponse.json({ leads: conserjeLeads });
+}
+
 export async function POST(req: NextRequest) {
   const body = await req.json();
+
   const {
     conserjeId,
     tipoInmueble,
@@ -82,20 +95,11 @@ export async function POST(req: NextRequest) {
     emailDueno,
   } = body;
 
-  if (
-    !conserjeId ||
-    !tipoInmueble ||
-    !tipoAcuerdo ||
-    !region ||
-    !comuna ||
-    !calleNumero ||
-    !fonoDueno ||
-    !emailDueno
-  ) {
+  if (!conserjeId || !tipoInmueble || !tipoAcuerdo || !region || !comuna || !calleNumero || !fonoDueno || !emailDueno) {
     return NextResponse.json({ error: 'Faltan campos obligatorios' }, { status: 400 });
   }
 
-  const lead = {
+  const newLead: Lead = {
     id: uuidv4(),
     conserjeId,
     tipoInmueble,
@@ -115,20 +119,8 @@ export async function POST(req: NextRequest) {
     asignadoA: []
   };
 
-  leads.push(lead);
-  return NextResponse.json({ success: true, lead });
-}
-
-export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url);
-  const conserjeId = searchParams.get('user');
-
-  if (!conserjeId) {
-    return NextResponse.json({ error: 'Falta el ID del conserje' }, { status: 400 });
-  }
-
-  const conserjeLeads = leads.filter((l) => l.conserjeId === conserjeId);
-  return NextResponse.json({ leads: conserjeLeads });
+  leads.push(newLead);
+  return NextResponse.json({ success: true, lead: newLead });
 }
 
 export async function PUT(req: NextRequest) {
